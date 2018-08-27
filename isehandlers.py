@@ -1,38 +1,49 @@
-import logging, json, traceback
-from common import common
+import logging, json, traceback, asyncio
+from tornado import web
 
 def assign_objects(isetools_obj):
     global ise_obj
     ise_obj = isetools_obj
 
-class Test(common.BaseHandler):
-    @common.unblock
-    def get(self):
+class Test(web.RequestHandler):
+    async def get(self):
         try:
             ise_obj.test_ise_version()
-            return {'result': "OK"}
+            self.write({'result': "OK"})
         except:
-            return {'error': "ISE Server unreachable or could not authenticate"}
+            self.set_status(500)
+            self.write({'error': "ISE Server unreachable or could not authenticate"})
+        finally:
+            self.finish()
 
-class PSK(common.BaseHandler):
-    @common.authenticated
-    def get(self):
+class PSK(web.RequestHandler):
+    async def get(self):
         mac = self.get_argument('mac', None)
-        if not mac:
-            return {'error': "Missing argument mac"}
         try:
-            epid, responsecode = ise_obj.get_endpointid(mac)
-            return {'result': epid}
-        except Exception as e:
-            return {'error': str(e)}
+            if not mac:
+                raise ValueError("Missing argument 'mac'")
 
-    @common.unblock # authentication isn't supported in the caller (Cloudpath)
-    def post(self):
+            response = ise_obj.get_endpointid(mac)
+            self.write({'result': (response[0] if response else None)})
+        except ValueError as e:
+            self.set_status(400)
+            self.write({'error': str(e)})
+        except Exception as e:
+            traceback.print_exc()
+            self.set_status(500)
+            self.write({'error': str(e)})
+        finally:
+            self.finish()
+
+    async def post(self):
         if self.request.headers.get('Content-Type') =='application/json':
             try:
                 args = json.loads(self.request.body)
             except ValueError:
-                return {'error': "No JSON object found"}
+                self.set_status(400)
+                self.write({'error': "No JSON object found"})
+                self.finish()
+                return
         else:
             args = { k: self.get_argument(k, None)
                     for k in self.request.arguments }
@@ -42,22 +53,25 @@ class PSK(common.BaseHandler):
         fname = args.get('firstname', None)
         lname = args.get('lastname', None)
 
-        if (not mac) or (not psk) or (not unid) or (not fname) or (not lname):
-            return {'error': "Missing argument: mac, psk, unid, fname, and " +
-                    "lname are required."}
-
         try:
+            if not mac or not psk or not unid or not fname or not lname:
+                raise ValueError("Missing argument: mac, psk, unid, fname, " +
+                        "and lname are required.")
             mac = ise_obj.parse_mac(mac)
             logging.info(unid + " is attempting to create/update iPSK for "+mac)
             responseCode = ise_obj.set_psk(mac, psk, unid)
             logging.info("Response code " + responseCode + " received for " +
                     "iPSK change in ISE for " + mac)
-            ise_obj.send_email(responseCode, unid, fname, lname, mac)
-            return {'result': 'iPSK succesfully updated/created.'}
+            self.write({'result': 'iPSK succesfully updated/created.'})
+        except ValueError as e:
+            self.set_status(400)
+            self.write({'error': str(e)})
         except Exception as e:
             traceback.print_exc()
-            ise_obj.send_email('500', unid, fname, lname, mac)
-            return {'error': str(e)}
+            self.set_status(500)
+            self.write({'error': str(e)})
+        finally:
+            self.finish()
 
 handlers = [
     (r"/ise/psk", PSK),
