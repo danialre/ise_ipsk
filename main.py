@@ -17,8 +17,6 @@ def create_server(serverlist, username, password, emailer=None, certfile=None,
     app = Application(handlers, debug=True)
 
     if certfile and keyfile:
-        print(certfile)
-        print(keyfile)
         # Enable HTTPS if certificates are available
         ssl_ctx = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
         ssl_ctx.load_cert_chain(certfile, keyfile)

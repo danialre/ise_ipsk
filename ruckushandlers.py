@@ -57,7 +57,22 @@ class RuckusDPSK(web.RequestHandler):
                     }]})
         except:
             traceback.print_exc()
+            self.set_status(500)
             self.write({})
+        finally:
+            self.finish()
+
+class RegularDPSK(web.RequestHandler):
+    async def get(self):
+        try:
+            # password: all lowercase, 12 character randomly generated
+            # also exclude vowels to avoid generating bad words
+            passphrase = ''.join([random.choice('bcdfghjklmnpqrstvwxyz')
+                    for _ in range(12)])
+            self.write({'result': str(passphrase)})
+        except Exception as e:
+            self.set_status(500)
+            self.write({'error': str(e)})
         finally:
             self.finish()
 
@@ -66,5 +81,6 @@ handlers = [
     (r"/api/public/v4_0/rkszones", RuckusZones),
     ("/api/public/v4_0/rkszones/" + zone_uuid + "/wlans", RuckusWLANs),
     ("/api/public/v4_0/rkszones/" + zone_uuid + "/wlans/" + wlan_uuid +
-            "/dpsk/upload", RuckusDPSK)
+            "/dpsk/upload", RuckusDPSK),
+    ("/ise/psk/generate", RegularDPSK),
 ]

@@ -36,10 +36,12 @@ class PSK(web.RequestHandler):
             self.finish()
 
     async def post(self):
+        # support both JSON bodies and URL arguments/parameters
         if self.request.headers.get('Content-Type') =='application/json':
             try:
                 args = json.loads(self.request.body)
             except ValueError:
+                traceback.print_exc()
                 self.set_status(400)
                 self.write({'error': "No JSON object found"})
                 self.finish()
@@ -64,6 +66,7 @@ class PSK(web.RequestHandler):
                     "iPSK change in ISE for " + mac)
             self.write({'result': 'iPSK succesfully updated/created.'})
         except ValueError as e:
+            traceback.print_exc()
             self.set_status(400)
             self.write({'error': str(e)})
         except Exception as e:

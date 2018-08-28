@@ -50,9 +50,9 @@ def setup_certs(certfile=None, keyfile=None):
     cert.sign(k, 'sha1')
 
     open(certfile, "wt").write(
-            str(crypto.dump_certificate(crypto.FILETYPE_PEM, cert)))
+            crypto.dump_certificate(crypto.FILETYPE_PEM, cert).decode())
     open(keyfile, "wt").write(
-            str(crypto.dump_privatekey(crypto.FILETYPE_PEM, k)))
+            crypto.dump_privatekey(crypto.FILETYPE_PEM, k).decode())
     return certfile, keyfile
 
 if __name__ == '__main__':
