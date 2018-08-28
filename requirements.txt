@@ -1,0 +1,5 @@
+beautifulsoup4
+futures
+pyOpenSSL
+requests
+tornado~=4.5
