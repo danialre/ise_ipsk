@@ -90,6 +90,11 @@ sends to ISE.
     {"result": <PSK as a string>}
     ```
 
+Caveats & Limitations
+---------------------
+- This project does not support frontend authentication! Ensure that client access
+is limited, or a proxy (with authentication support) is used.
+
 Authors
 -------
 Written by Brian Sorensen (brian.sorensen@utah.edu) and Danial Ebling (danial.ebling@utah.edu) for the University of Utah.
