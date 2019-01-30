@@ -1,4 +1,4 @@
-ISE ISPK REST Handlers
+ISE IPSK REST Handlers
 ======================
 
 This project provides a simple REST API to use for registering Individual PSKs
